@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>汉字谜盒</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ===================== 左栏：控制台 ===================== -->
+    <aside class="sidebar-left">
+      <div class="sidebar-header">
+        <h1 class="title"><span class="icon lightning">&#9889;</span> 汉字谜盒控制台</h1>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn-primary" id="btn-new-game">
+          <span class="icon lightning">&#9889;</span> 新建游戏
+        </button>
+      </div>
+
+      <div class="history-section">
+        <h3 class="section-title">历史记录</h3>
+        <ul class="history-list" id="history-list">
+          <!-- 由 app.js 动态渲染 -->
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ===================== 中栏：聊天区 ===================== -->
+    <main class="chat-main">
+      <header class="chat-header">
+        <div class="title-group">
+          <span class="icon lightning">&#9889;</span>
+          <h2>汉字谜盒</h2>
+        </div>
+        <span class="session-name" id="session-name">会话名称：--</span>
+      </header>
+
+      <div class="chat-messages" id="chat-messages">
+        <!-- 聊天气泡由 app.js 渲染 -->
+        <!-- 空态占位：没有消息时居中显示 -->
+        <div class="chat-empty" id="chat-empty">
+          <svg class="empty-wand" viewBox="0 0 64 64" width="64" height="64" fill="none">
+            <!-- 魔棒柄 -->
+            <path d="M14 50 L42 22" stroke="#8b4a8c" stroke-width="6" stroke-linecap="round"/>
+            <!-- 魔棒头 -->
+            <path d="M44 20 L48 16" stroke="#c9cdd4" stroke-width="6" stroke-linecap="round"/>
+            <!-- 星星 -->
+            <path d="M50 10 l1.5 3.5 L55 15 l-3.5 1.5 L50 20 l-1.5-3.5 L45 15 l3.5-1.5 Z" fill="#f5c842"/>
+            <path d="M22 14 l1 2.4 l2.4 1 l-2.4 1 l-1 2.4 l-1-2.4 l-2.4-1 l2.4-1 Z" fill="#f5c842" opacity="0.7"/>
+            <path d="M36 30 l0.8 1.9 l1.9 0.8 l-1.9 0.8 l-0.8 1.9 l-0.8-1.9 l-1.9-0.8 l1.9-0.8 Z" fill="#f5c842" opacity="0.5"/>
+          </svg>
+          <p>开始汉字谜盒挑战吧~</p>
+        </div>
+      </div>
+
+      <footer class="chat-input-area">
+        <div class="input-wrapper">
+          <input type="text" id="message-input"
+                 placeholder="输入你的答案，或者问我要新题目～"
+                 autocomplete="off">
+          <button class="btn-send" id="btn-send" title="发送">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </main>
+
+    <!-- ===================== 右栏：游戏简介 ===================== -->
+    <aside class="sidebar-right">
+      <div class="panel-header">
+        <span class="icon lightning">&#9889;</span>
+        <h2>游戏简介</h2>
+      </div>
+
+      <div class="panel-content">
+        <section class="intro-section">
+          <h3>汉字谜盒</h3>
+          <p>汉字谜盒是一款基于人工智能的字谜互动游戏，让你在猜字的过程中感受汉字的魅力。</p>
+        </section>
+
+        <section class="feature-section">
+          <h3><span class="star">&#11088;</span> 核心玩法</h3>
+          <p>AI随机出经典字谜，你来猜字，猜错时 AI 会给出提示引导。</p>
+        </section>
+
+        <section class="features-list">
+          <h3><span class="star">&#10024;</span> 特色功能</h3>
+          <ul>
+            <li><strong>智能判题</strong>：AI精准判断，即时夸奖</li>
+            <li><strong>贴心提示</strong>：猜错时提供线索引导，不直接透露答案</li>
+            <li><strong>无限挑战</strong>：每次出题完全随机，永不重复</li>
+            <li><strong>会话记忆</strong>：游戏记录自动保存，随时回顾精彩对局</li>
+          </ul>
+        </section>
+
+        <section class="audience-section">
+          <h3><span class="star">&#127919;</span> 适合人群</h3>
+          <ul>
+            <li>汉字文化爱好者</li>
+            <li>语文学习辅助工具</li>
+            <li>课堂教学演示素材</li>
+            <li>休闲娱乐解谜玩家</li>
+          </ul>
+        </section>
+
+        <div class="panel-footer">
+          <p>快来挑战你的汉字智慧，在轻松互动中感受汉字的无穷魅力！</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
