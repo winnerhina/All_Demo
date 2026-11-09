@@ -1,9 +1,6 @@
 """字谜 AI 助手：封装 DeepSeek 调用与会话历史维护。"""
-import hashlib
-
 from openai import OpenAI
 
-import cache
 import config
 from function import Session, SessionStorage
 
@@ -53,20 +50,8 @@ class RiddleAI:
             base_url=config.DEEPSEEK_BASE_URL,
         )
 
-    def _reply_cache_key(self, session_id: str, user_message: str) -> str:
-        """按会话与用户消息生成 AI 回复缓存键。"""
-        return hashlib.md5(f"{session_id}|{user_message}".encode("utf-8")).hexdigest()
-
     def chat(self, session: Session, user_message: str) -> str:
-        """对话：命中缓存直接复用，未命中调用大模型并回填缓存。"""
-        msg_hash = self._reply_cache_key(session.session_id, user_message)
-        cached_reply = cache.get_cached_ai_reply(msg_hash)
-        if cached_reply is not None:
-            session.add_message("user", user_message)
-            session.add_message("assistant", cached_reply)
-            self.storage.save(session)
-            return cached_reply
-
+        """调用大模型回复，再将双方消息保存到本地 JSON。"""
         # 组装消息：系统提示 + 会话历史 + 本次用户消息
         messages = [{"role": "system", "content": self.system_prompt}]
         messages.extend(session.messages)
@@ -85,5 +70,4 @@ class RiddleAI:
         session.add_message("assistant", reply)
         self.storage.save(session)
 
-        cache.cache_ai_reply(msg_hash, reply)
         return reply
