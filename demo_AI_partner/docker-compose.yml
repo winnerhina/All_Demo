@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      DB_PATH: /app/data/ai_partner.db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DEEPSEEK_API_KEY_1: ${DEEPSEEK_API_KEY_1}
+    volumes:
+      - sqlite_data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sqlite_data:
+  redis_data:
