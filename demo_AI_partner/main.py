@@ -1,22 +1,9 @@
-import hashlib
-
 import streamlit as st
 from openai import OpenAI
 
-import cache
 import config
-import db
 import function
 
-
-def _reply_cache_key(text):
-    """按昵称、性格、用户消息生成 AI 回复缓存键。"""
-    raw = f"{st.session_state.nickname}|{st.session_state.personality}|{text}"
-    return hashlib.md5(raw.encode("utf-8")).hexdigest()
-
-
-# 启动时初始化数据库表
-db.init_db()
 
 st.set_page_config(
     page_title="AI智能伴侣",
@@ -99,37 +86,28 @@ if input_text:
     st.chat_message("user").write(input_text)
     st.session_state.messages.append({"role": "user", "content": input_text})
 
-    msg_hash = _reply_cache_key(input_text)
-    cached_reply = cache.get_cached_ai_reply(msg_hash)
+    try:
+        response = client.chat.completions.create(
+            model=config.DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *st.session_state.messages,
+            ],
+            stream=True,
+            reasoning_effort="high",
+            extra_body={"thinking": {"type": "enabled"}}
+        )
 
-    if cached_reply is not None:
-        # 命中缓存，直接复用，不重复调用大模型
-        st.chat_message("assistant").write(cached_reply)
-        st.session_state.messages.append({"role": "assistant", "content": cached_reply})
-    else:
-        try:
-            response = client.chat.completions.create(
-                model=config.DEEPSEEK_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *st.session_state.messages,
-                ],
-                stream=True,
-                reasoning_effort="high",
-                extra_body={"thinking": {"type": "enabled"}}
-            )
-
-            with st.chat_message("assistant"):
-                response_message = st.empty()
-                content = ""
-                for chunk in response:
-                    if chunk.choices and chunk.choices[0].delta.content is not None:
-                        content += chunk.choices[0].delta.content
-                        response_message.write(content)
-            st.session_state.messages.append({"role": "assistant", "content": content})
-            cache.cache_ai_reply(msg_hash, content)
-        except Exception as e:
-            st.error(f"调用大模型失败：{e}")
+        with st.chat_message("assistant"):
+            response_message = st.empty()
+            content = ""
+            for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    content += chunk.choices[0].delta.content
+                    response_message.write(content)
+        st.session_state.messages.append({"role": "assistant", "content": content})
+    except Exception as e:
+        st.error(f"调用大模型失败：{e}")
 
     # 每次互动后保存会话，并刷新页面同步会话列表
     function.session_save()
