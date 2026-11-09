@@ -1,107 +1,72 @@
-# 💕 AI 智能伴侣
+# AI 伙伴
 
-一个基于 **Streamlit + DeepSeek 大模型** 的 AI 伴侣聊天应用。你可以自由定制伴侣的**昵称**和**性格**，与 TA 进行微信聊天式的实时对话，支持流式输出、多会话管理，聊天的每一步都会自动保存。
+一个基于 Python、Streamlit 和 DeepSeek API 的角色聊天应用。可以设置 AI 的昵称和性格，查看逐步显示的回复，并将聊天记录保存到本地 JSON 文件。
 
-本项目面向初学者，在基础聊天功能之上，额外加入了 **SQLite（本地数据库）**、**Redis（缓存）** 和 **Docker（容器化部署）**，方便你学习这三项常用技术。
+## 功能
 
-## ✨ 功能特性
+- 自定义 AI 昵称和性格。
+- 逐步显示模型回复，即流式输出。
+- 新建、切换和删除会话。
+- 自动保存角色设置和聊天记录，重启后可恢复并继续聊天。
 
-- 🤖 **定制专属伴侣**：自定义昵称和性格，塑造独一无二的 AI 伴侣
-- 💬 **实时流式对话**：流式输出回复，像微信聊天一样自然
-- 📂 **多会话管理**：支持新建、切换、删除会话，互不干扰
-- 💾 **自动保存**：每次互动后自动保存会话到 **SQLite**，重启应用也不丢失
-- ⚡ **Redis 缓存加速**：会话读缓存、AI 回复缓存，命中后不再重复调用大模型
-- 🐳 **Docker 一键部署**：`docker compose up` 启动应用 + Redis
+## 本地运行
 
-## 🛠️ 技术栈
+需要 Python 3.11 或更新版本。先进入本项目文件夹，再执行：
 
-- [Python 3.11+](https://www.python.org/)
-- [Streamlit](https://streamlit.io/) - Web 应用框架
-- [OpenAI SDK](https://github.com/openai/openai-python) - 调用 DeepSeek API
-- [DeepSeek API](https://platform.deepseek.com/) - 大模型接口
-- [SQLite](https://www.sqlite.org/) - 本地单文件数据库（Python 内置，零配置）
-- [Redis 7](https://redis.io/) - 会话/回复缓存
-- [Docker](https://www.docker.com/) - 容器化部署
-
-## 📁 目录结构
-
-```
-demo_AI_partner/
-├── main.py               # 应用入口（页面、聊天逻辑、AI 回复缓存）
-├── function.py           # 会话业务函数（保存/加载/删除，调用 db 和 cache）
-├── db.py                 # SQLite 封装（建表 + 会话增删改查）
-├── cache.py              # Redis 缓存封装（会话缓存 + AI 回复缓存）
-├── config.py             # 集中配置（从环境变量/.env 读取连接信息）
-├── requirements.txt      # Python 依赖
-├── .env.example          # 环境变量示例（复制为 .env 后填写）
-├── Dockerfile            # 应用镜像构建文件
-├── docker-compose.yml    # 一键编排 app + Redis
-├── data/                 # SQLite 数据库文件目录（运行时生成，已忽略）
-└── resources/
-    └── logo.png          # 应用 logo
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-## 🚀 快速开始
+在本地 `.env` 中填写 `DEEPSEEK_API_KEY_1`，然后使用下面的启动命令。密钥不要写进代码或提交到 GitHub。
 
-### 方式一：Docker 一键启动（推荐初学者）
-
-需要先安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)。
-
-```bash
-cd demo_AI_partner
-
-# 1. 准备密钥（复制示例文件并填入你的 DeepSeek Key）
-cp .env.example .env     # Windows 用 copy .env.example .env
-
-# 2. 构建并启动（应用 + Redis 两个容器）
-docker compose up --build
-
-# 3. 停止
-docker compose down       # 加 -v 会连同数据卷一起删除
+```powershell
+python -m streamlit run main.py
 ```
 
 浏览器打开 `http://localhost:8501`。
 
-### 方式二：本地运行
+## 聊天记录保存在哪里
 
-需要本机装好 Python；SQLite 内置无需安装，Redis 需要单独准备（本机安装，或用 `docker run -d -p 6379:6379 redis:7-alpine`）。
+- 默认保存在本项目的 `sessions/` 文件夹，一个会话对应一个 `.json` 文件。
+- 发送消息后自动保存；重启后可以从历史列表继续聊天。
+- 原来相同格式的 JSON 记录可以直接读取，不需要转换。
+- 先写临时文件，写完再替换正式文件，避免写入失败损坏已有记录。
+- 删除会话会删除对应的本地 JSON 文件。
+- `sessions/` 与 `.env` 已加入本项目的 `.gitignore`，不会随代码提交。
 
-```bash
-# 1. 安装依赖
-pip install -r requirements.txt
+## 配置项
 
-# 2. 配置环境变量（复制 .env.example 为 .env 并填写）
-#    关键项：DEEPSEEK_API_KEY_1、DB_PATH、REDIS_HOST
+| 环境变量 | 作用 | 默认值 |
+|---|---|---|
+| `DEEPSEEK_API_KEY_1` | 大模型接口密钥 | 必填 |
+| `DEEPSEEK_BASE_URL` | 大模型接口地址 | `https://api.deepseek.com` |
+| `DEEPSEEK_MODEL` | 模型名称，可按账号支持的模型调整 | `deepseek-flash` |
+| `SESSIONS_DIR` | 聊天记录保存目录 | `sessions` |
 
-# 3. 启动应用
-streamlit run main.py
+`SESSIONS_DIR` 的相对路径以本项目目录为起点，也可以使用绝对路径。
+
+## 检查功能
+
+```powershell
+python -m pip install pytest httpx
+python -m pytest tests -q
 ```
 
-> Redis 如果连不上，程序会自动降级（跳过缓存继续运行）；SQLite 是数据存储，会自动在 `data/` 目录创建数据库文件。
+测试使用临时文件和模拟模型回复，不会读取你的聊天记录，也不会调用付费模型接口。
 
-## 🎯 使用说明
+## 每个文件的作用
 
-- **定制伴侣**：在左侧边栏输入想要的昵称和性格，例如「温柔体贴的学姐」「幽默搞笑的好兄弟」
-- **新建会话**：点击侧边栏「新建会话」按钮，开始一段全新的对话
-- **切换会话**：点击侧边栏的历史会话按钮，继续之前的聊天
-- **删除会话**：点击会话旁的 ❌ 按钮删除对应会话
-
-## ⚙️ 配置项
-
-| 配置 | 环境变量 | 默认值 | 说明 |
-|------|----------|--------|------|
-| API 密钥 | `DEEPSEEK_API_KEY_1` | 无 | DeepSeek API Key，必填 |
-| 模型 | `DEEPSEEK_MODEL` | `deepseek-flash` | 可按需更换 |
-| 数据库路径 | `DB_PATH` | `data/ai_partner.db` | SQLite 数据库文件位置 |
-| Redis 地址 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | 缓存连接 |
-| Redis 库 | `REDIS_DB` | `0` | 使用第几个库 |
-
-## 📝 架构说明（初学者向）
-
-- **SQLite 会话表 `sessions`**：一个会话一行，聊天记录（`messages`）以 JSON 文本存进 `TEXT` 字段；表在应用启动时由 `db.init_db()` 自动创建。
-- **Redis 缓存**：读会话、读 AI 回复都先查 Redis，命中即返回，未命中再查库/调模型并回填缓存；AI 回复缓存默认 24 小时过期。
-- **降级策略**：Redis 连不上会自动跳过缓存继续运行；SQLite 内置无需服务，本地运行零配置。
-
-## 📄 许可证
-
-本项目仅供个人学习使用。
+| 文件 | 作用 |
+|---|---|
+| `main.py` | Streamlit 页面入口，显示角色设置与聊天界面，调用模型并逐步显示回复 |
+| `function.py` | 生成会话编号，在本地 JSON 文件中保存、读取、列出与删除会话 |
+| `config.py` | 读取模型配置和聊天记录目录 |
+| `.env.example` | 不含真实密钥的配置示例 |
+| `requirements.txt` | 运行项目所需的 Python 库 |
+| `.gitignore` | 避免提交聊天记录、密钥、日志和临时文件 |
+| `resources/logo.png` | 页面图标与应用标识 |
+| `tests/test_json_storage.py` | 检查记录保存恢复、旧格式兼容、写入失败保护及页面聊天、切换、删除流程 |
+| `README.md` | 项目说明、运行步骤和文件用途 |
