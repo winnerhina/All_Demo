@@ -8,11 +8,6 @@ from fastapi.staticfiles import StaticFiles
 
 from function import ApiRequest, ApiResponse, SessionStorage
 from AI_interaction import RiddleAI
-import db
-
-
-# 启动时初始化数据库表
-db.init_db()
 
 # 配置日志
 logging.basicConfig(
