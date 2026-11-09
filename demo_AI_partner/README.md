@@ -17,10 +17,15 @@
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
 ```
 
-在本地 `.env` 中填写 `DEEPSEEK_API_KEY_1`，然后使用下面的启动命令。密钥不要写进代码或提交到 GitHub。
+在同一个 PowerShell 窗口中设置自己的模型密钥：
+
+```powershell
+$env:DEEPSEEK_API_KEY_1 = '填写你自己的DeepSeek密钥'
+```
+
+这个设置只对当前终端及其启动的程序生效。新开终端时需要重新设置；不要把真实密钥写进源代码。然后执行启动命令：
 
 ```powershell
 python -m streamlit run main.py
@@ -35,7 +40,7 @@ python -m streamlit run main.py
 - 原来相同格式的 JSON 记录可以直接读取，不需要转换。
 - 先写临时文件，写完再替换正式文件，避免写入失败损坏已有记录。
 - 删除会话会删除对应的本地 JSON 文件。
-- `sessions/` 与 `.env` 已加入本项目的 `.gitignore`，不会随代码提交。
+- `sessions/` 是运行后生成的本地数据，不属于仓库文件。上传代码时请将它加入本地 Git 忽略规则。
 
 ## 配置项
 
@@ -48,14 +53,11 @@ python -m streamlit run main.py
 
 `SESSIONS_DIR` 的相对路径以本项目目录为起点，也可以使用绝对路径。
 
-## 检查功能
+`config.py` 也支持读取自己创建的本地 `.env` 文件；如使用这种方式，请将 `.env` 加入本地 Git 忽略规则。仓库不包含密钥文件。
 
-```powershell
-python -m pip install pytest httpx
-python -m pytest tests -q
-```
+## 使用检查
 
-测试使用临时文件和模拟模型回复，不会读取你的聊天记录，也不会调用付费模型接口。
+启动后，新建会话并发送消息；关闭程序后重新启动，从历史列表打开刚才的会话，检查消息是否保存。删除会话后，对应 JSON 文件也会删除。
 
 ## 每个文件的作用
 
@@ -64,9 +66,6 @@ python -m pytest tests -q
 | `main.py` | Streamlit 页面入口，显示角色设置与聊天界面，调用模型并逐步显示回复 |
 | `function.py` | 生成会话编号，在本地 JSON 文件中保存、读取、列出与删除会话 |
 | `config.py` | 读取模型配置和聊天记录目录 |
-| `.env.example` | 不含真实密钥的配置示例 |
 | `requirements.txt` | 运行项目所需的 Python 库 |
-| `.gitignore` | 避免提交聊天记录、密钥、日志和临时文件 |
 | `resources/logo.png` | 页面图标与应用标识 |
-| `tests/test_json_storage.py` | 检查记录保存恢复、旧格式兼容、写入失败保护及页面聊天、切换、删除流程 |
 | `README.md` | 项目说明、运行步骤和文件用途 |
