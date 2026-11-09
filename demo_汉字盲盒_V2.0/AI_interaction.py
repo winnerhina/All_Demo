@@ -1,12 +1,10 @@
-"""
-AI_interaction.py —— 字谜 AI 助手类
+"""字谜 AI 助手：封装 DeepSeek 调用与会话历史维护。"""
+import hashlib
 
-把"和 DeepSeek 大模型对话"封装成 RiddleAI 类：
-- 构造函数接收会话存储对象（依赖注入），并初始化大模型客户端
-"""
-import os
 from openai import OpenAI
 
+import cache
+import config
 from function import Session, SessionStorage
 
 
@@ -45,36 +43,37 @@ SYSTEM_PROMPT = """
 
 
 class RiddleAI:
-    """字谜 AI 助手：封装大模型调用与会话历史维护"""
+    """字谜 AI 助手：封装大模型调用与会话历史维护。"""
 
     def __init__(self, storage: SessionStorage, system_prompt: str = SYSTEM_PROMPT):
-        """
-        :param storage: 会话存储对象
-        :param system_prompt: 系统提示词
-        """
         self.storage = storage
         self.system_prompt = system_prompt
         self.client = OpenAI(
-            api_key=os.environ.get('DEEPSEEK_API_KEY_1'),
-            base_url="https://api.deepseek.com",
+            api_key=config.DEEPSEEK_API_KEY,
+            base_url=config.DEEPSEEK_BASE_URL,
         )
 
-    def chat(self, session: Session, user_message: str) -> str:
-        """
-        与 AI 对话：把用户消息发给大模型，把"用户消息 + AI 回复"都存进会话，返回 AI 回复
+    def _reply_cache_key(self, session_id: str, user_message: str) -> str:
+        """按会话与用户消息生成 AI 回复缓存键。"""
+        return hashlib.md5(f"{session_id}|{user_message}".encode("utf-8")).hexdigest()
 
-        :param session: 当前会话对象
-        :param user_message: 用户本次发送的消息
-        :return: AI 的回复文本
-        """
-        # 1.组装发给大模型的消息（系统提示 + 会话历史 + 本次用户消息）
+    def chat(self, session: Session, user_message: str) -> str:
+        """对话：命中缓存直接复用，未命中调用大模型并回填缓存。"""
+        msg_hash = self._reply_cache_key(session.session_id, user_message)
+        cached_reply = cache.get_cached_ai_reply(msg_hash)
+        if cached_reply is not None:
+            session.add_message("user", user_message)
+            session.add_message("assistant", cached_reply)
+            self.storage.save(session)
+            return cached_reply
+
+        # 组装消息：系统提示 + 会话历史 + 本次用户消息
         messages = [{"role": "system", "content": self.system_prompt}]
-        messages.extend(session.messages)  # extend() 方法：在列表末尾添加多个元素
+        messages.extend(session.messages)
         messages.append({"role": "user", "content": user_message})
 
-        # 2.调用大模型获取回复
         response = self.client.chat.completions.create(
-            model="deepseek-flash",
+            model=config.DEEPSEEK_MODEL,
             messages=messages,
             stream=False,
             reasoning_effort="high",
@@ -82,9 +81,9 @@ class RiddleAI:
         )
         reply = response.choices[0].message.content
 
-        # 3.把用户消息和 AI 回复都存进会话历史，然后保存会话对象
         session.add_message("user", user_message)
         session.add_message("assistant", reply)
         self.storage.save(session)
 
+        cache.cache_ai_reply(msg_hash, reply)
         return reply
