@@ -1,0 +1,14 @@
+# 本地密钥与聊天记录
+.env
+.env.*
+!.env.example
+sessions/
+data/
+*.log
+
+# Python 临时文件与虚拟环境
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
